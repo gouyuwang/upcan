@@ -1,0 +1,147 @@
+{% extends './public/layout.html' %}
+{% block header %}
+
+<div class="wrap-container clearfix">
+	<div class="column-content-detail">
+		<form class="layui-form" action="">
+			<div class="layui-form-item">
+				<div class="layui-inline tool-btn">
+					<button class="layui-btn layui-btn-small layui-btn-normal addBtn" data-url="admin-add"><i class="layui-icon">&#xe654;</i></button>
+				</div> 
+
+				<div class="layui-inline">
+					<input type="text" name="q" value="{{q}}" required lay-verify="required" placeholder="请输入关键词" autocomplete="off" class="layui-input">
+				</div>
+				<button class="layui-btn layui-btn-normal" lay-submit="search">搜索</button>
+				
+				<button class="layui-btn layui-btn-primary" onclick="refresh();">刷新</button>
+			</div>
+		</form>
+		 
+ 		<div class="layui-form" id="table-list">
+			<table class="layui-table" lay-even lay-skin="nob">
+				<colgroup>
+					<col class="hidden-xs" width="50">
+					<col class="hidden-xs" width="250">
+					<col>
+					<col class="hidden-xs" width="250">
+					<col class="hidden-xs" width="250">
+					<col width="150">
+				</colgroup>
+				<thead>
+					<tr>
+						<th class="hidden-xs">ID</th> 
+						<th class="hidden-xs">账户</th>
+						<th class="hidden-xs">昵称</th> 
+						<th class="hidden-xs">状态</th>
+						<th class="hidden-xs">更新时间</th> 
+						<th>操作</th>
+					</tr>
+				</thead>
+				<tbody>
+
+  {% if total_num > 0 %}
+        {% for item in list %}
+					<tr>
+						<td class="hidden-xs">{{item.admin_id}}</td>
+						<td class="hidden-xs">{{item.admin_account}}</td>
+						<td>{{item.admin_nickname}}</td>
+						<td>
+							{% if item.status == 1 %}
+							<input class="adminStatus" type="checkbox" name="switch" data-id={{item.admin_id}}  lay-filter='switch' lay-skin="switch" checked lay-text='启用|禁用'>
+							{% else %}
+							<input class="adminStatus" type="checkbox" name="switch" data-id={{item.admin_id}} lay-filter='switch' lay-skin="switch"  lay-text='启用|禁用'>
+ 							{% endif %}		
+						</td>
+						<td class="hidden-xs">{{item.update_time}}</td> 
+						<td>
+							<div class="layui-inline">
+								<button class="layui-btn layui-btn-small layui-btn-normal addAuto" data-url="/admin-edit?admin_id={{item.admin_id}}"><i class="layui-icon">&#xe642;</i></button>
+								<button class="layui-btn layui-btn-small layui-btn-danger deleAuto" admin_id="{{item.admin_id}}"><i class="layui-icon">&#xe640;</i></button>
+							</div>
+						</td>
+					</tr> 
+	     {% endfor %} 
+  {% endif %}
+
+					 	
+				</tbody>
+			</table>
+
+			<div class="page-wrap"> </div>
+		</div>
+	</div>
+</div>
+
+{% endblock %}
+
+
+{% block footer %}
+
+<script type="text/javascript">
+
+// 删除媒体
+$('body').on('click','.deleAuto',function(){
+	var params = {};
+	params.admin_id = $(this).attr('admin_id');
+		Http({url:'/deleAdmin',method:'DELETE'},params, function(rsp){
+		if(rsp.code == 2000){ 
+			layer.msg(rsp.msg,{icon:1,time:500},function(){
+				location.reload();
+			});
+		} else {
+			layer.msg(rsp.msg,{icon:2,time:2000});
+		}
+	});	
+ 	return false;
+});
+
+layui.use(['form', 'jquery', 'laydate', 'layer', 'laypage', 'dialog',  'element'], function() {
+	var form = layui.form(),
+		layer = layui.layer,
+		$ = layui.jquery,
+		dialog = layui.dialog;
+	//获取当前iframe的name值
+	var iframeObj = $(window.frameElement).attr('name');
+
+	// 顶部添加
+	$('body').on('click','.addAuto',function(){
+		var url = $(this).attr('data-url');
+		//将iframeObj传递给父级窗口,执行操作完成刷新
+		w = $(this).attr('data-width') || "480px";
+		h = $(this).attr('data-height') || "300px";
+		parent.page("添加", url, iframeObj, w, h);
+		return false;
+	});
+
+	 form.on('switch(switch)',function(data){
+	 	var params =  {};
+	 	var that = $(this);
+	 	params.admin_id = that.data('id');
+	 	Http({url:'/adminState',method:'PUT'},params,function(rsp){
+	 	   if(rsp.code == 2000){ 		
+		 		 if(data.elem.checked){
+		 	   	 	 layer.msg('已启用');		
+			 	 } else{
+			 	     layer.msg('已禁用');	
+			 	 } 
+		 	} else{
+				layer.msg(rsp.msg, {icon:2}); 
+		 	}
+	 	})
+	 	
+	 });
+});
+
+
+
+
+// 分页
+window.call = function(current_page,page_size){
+  location.href="/admin-list?current_page="+current_page+'&page_size='+page_size+'&q={{q}}&qn={{qn}}';
+} 
+var html = multi(parseInt('{{total_num}}'), parseInt('{{current_page}}'), parseInt('{{page_size}}'),'call');
+$('.page-wrap').html(html);
+</script>
+
+{% endblock %}

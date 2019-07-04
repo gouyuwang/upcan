@@ -1,0 +1,167 @@
+{% extends './public/layout.html' %}
+
+{% block content %}
+<div class="page-content-wrap">
+	<form class="layui-form">
+
+		<div class="layui-form-item">
+			<label class="layui-form-label">上传：</label>
+			<div class="layui-input-block"> 
+				<input type="file" name="file"> 
+				<input type="hidden" name="url" value="{{url}}">
+				<label id="js-progress"></label>
+			</div>
+		</div> 
+
+		<div class="layui-form-item layui-form-text">
+			<label class="layui-form-label">描述：</label>
+			<div class="layui-input-block">
+				<textarea name="media_desc" placeholder="请输入视频简要描述(不超过255个汉字)" maxlength="255" class="layui-textarea">{{media_desc}}</textarea>
+			</div>
+		</div>
+
+		{% if media_id %}
+			<input type="hidden" name="media_id" value="{{media_id}}">
+		{% endif %}
+
+
+		<div class="layui-form-item" style="padding-left: 10px;">
+			<div class="layui-input-block">
+				<button class="layui-btn layui-btn-normal" lay-submit lay-filter="submit">立即提交</button>
+				<button type="reset" class="layui-btn layui-btn-primary">重置</button>
+			</div>
+		</div>
+
+	</form>
+
+</div>
+{% endblock %}
+
+{% block footer %}   
+<script type="text/javascript">
+layui.use(['form', 'jquery', 'laydate', 'layer', 'laypage', 'dialog',  'element', 'upload', 'layedit'], function() {
+			var form = layui.form(),
+				layer = layui.layer,
+				$ = layui.jquery,
+				laypage = layui.laypage,
+				laydate = layui.laydate,
+				layedit = layui.layedit,
+				element = layui.element(),
+				dialog = layui.dialog,
+				upload = layui.upload;;
+
+
+		  // 获取当前iframe的name值
+		  var iframeObj = $(window.frameElement).attr('name');
+
+		  form.render();  
+
+		   // 监听提交
+		  form.on('submit(submit)', function(data){
+		      var params = data.field;
+		      delete params.file; 
+
+				  if ( params.media_id ){ 
+				  	proc = {url:'/editVideo',method:'PUT'};
+				  }	 else {
+				  	proc = {url:'/addVideo',method:'POST'};
+				  }
+
+		      // 数据提交
+	          Http(proc ,params,function(res){
+	            if (res.code == 2000){
+	                layer.msg(res.msg,{icon:1, time:500},function(){
+                       parent.layer.close(parent.layer.getFrameIndex(window.name)); 
+	                });
+	            } else {
+	               layer.msg(res.msg,{icon:2, time:2000});
+	            }
+	         });
+		     return false;
+		  });
+
+		});
+
+
+    // 文件上传
+    $('body').on('change', 'input[type=file]', function () {
+        var Qiniu_UploadUrl = "http://up.qiniu.com";
+        var $this = $(this);
+        //普通上传
+        var Qiniu_upload = function (f, token, key) {
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', Qiniu_UploadUrl, true);
+            var formData, startDate;
+            formData = new FormData();
+            if (key !== null && key !== undefined) formData.append('key', key);
+            formData.append('token', token);
+            formData.append('file', f);
+            var taking;
+
+            var progressBar = $("#js-progress");
+
+            // 进度监听
+            xhr.upload.addEventListener("progress", function (evt) {
+                if (evt.lengthComputable) {
+                    var nowDate = new Date().getTime();
+                    taking = nowDate - startDate;
+                    var x = (evt.loaded) / 1024;
+                    var y = taking / 1000;
+                    var uploadSpeed = (x / y);
+                    var formatSpeed;
+                    if (uploadSpeed > 1024) {
+                        formatSpeed = (uploadSpeed / 1024).toFixed(2) + "Mb\/s";
+                    } else {
+                        formatSpeed = uploadSpeed.toFixed(2) + "Kb\/s";
+                    }
+                    var percentComplete = Math.round(evt.loaded * 100 / evt.total);
+                    progressBar.html(percentComplete + '%'); 
+                }
+            }, false);
+            // 上传状态监听
+            xhr.onreadystatechange = function (response) {
+                if (xhr.readyState == 4) {
+                    if (xhr.status == 200 && xhr.responseText != "") {
+ 						var data = JSON.parse(response.target.response);
+                        var downloadLink = 'https://img.darongshutech.com/' + data.key;
+                        // $('#download').val(downloadLink);
+                        $('input[name=url]').val(data.key);
+                        $("#js-progress").html('上传成功!');
+                        console.log('上传成功!');
+                    } else {
+                        console.log(xhr.readyState);
+                        console.log(xhr.status);
+                        console.log(xhr.responseText);
+                        parent.layer.msg('上传失败!');
+                    }
+                }
+            };
+            startDate = new Date().getTime();
+            xhr.send(formData);
+        };
+
+        //类型限制
+        if (uploadType($this.val())) {
+            $.get('/getToken', function (data) {
+                var token = data.data.token;
+                if ($this[0].files.length > 0 && token != "") {
+                    Qiniu_upload($this[0].files[0], token, data.data.key);
+                } else {
+                    console && console.log("form input error");
+                }
+            });
+        }
+        return;
+    });
+
+    //上传格式限制
+    function uploadType(filePath) {
+        // 获取文件格式
+        filePath = filePath.split('.');
+        // 文件格式
+        var fileType = filePath[filePath.length - 1];
+        fileType = fileType.toLowerCase(); 
+        return true;
+    }
+</script>
+{% endblock %}

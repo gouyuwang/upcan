@@ -1,0 +1,25 @@
+{
+  "apps" : [{
+    "name"        : "upcan",
+    "script"      : "./bin/www",
+    "cwd"         : "./",
+    "watch": [
+      "./bin",
+      "./conf",
+      "./public",
+      "./routes",
+      "./util",
+      "./views"
+    ],
+    "ignore_watch" : [
+      "./node_modules"
+    ],
+    "watch_options": {
+      "followSymlinks": false
+    },
+    "env": {
+      "NODE_ENV": "dev"
+    }
+  }]
+}
+

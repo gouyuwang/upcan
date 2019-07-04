@@ -1,0 +1,13 @@
+<!-- 网站整体架构 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% include "_header.html"%}
+    {% block header %}{% endblock %}
+</head>
+<body>
+    {% block content %}{% endblock %}
+</body>
+{% include "_footer.html" %}
+{% block footer %}{% endblock %}
+</html>

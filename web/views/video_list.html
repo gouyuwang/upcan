@@ -1,0 +1,112 @@
+{% extends './public/layout.html' %}
+
+{% block content %}
+<div class="wrap-container clearfix">
+	<div class="column-content-detail">
+		<form class="layui-form" action="">
+			<div class="layui-form-item"> 
+
+				<div class="layui-inline tool-btn">
+					<button class="layui-btn layui-btn-small layui-btn-normal addBtn" id="addVideo" data-url="/video-add"><i class="layui-icon">&#xe654;</i></button> 
+				</div>
+
+				<div class="layui-inline">
+					<input type="text" name="q" value="{{q}}" required lay-verify="required" placeholder="请输入关键词" autocomplete="off" class="layui-input">
+				</div>
+				<button class="layui-btn layui-btn-normal" lay-submit="search">搜索</button>
+				
+				<button class="layui-btn layui-btn-primary" onclick="refresh();">刷新</button>
+			</div>
+		</form>
+		<div class="layui-form" id="table-list">
+			<table class="layui-table" lay-even lay-skin="nob">
+				<colgroup>
+					<col class="hidden-xs" width="50">
+					<col class="hidden-xs" width="100">
+					<col>
+					<col class="hidden-xs" width="250">
+					<col class="hidden-xs" width="250">
+					<col width="150">
+				</colgroup>
+				<thead>
+					<tr>
+						<th class="hidden-xs">ID</th>
+						<th>视频截图</th>
+						<th class="hidden-xs">描述</th>
+						<th class="hidden-xs">视频地址</th> 
+						<th>操作</th>
+					</tr>
+				</thead>
+				<tbody>
+
+
+  {% if total_num > 0 %}
+        {% for item in list %}
+					<tr id="row_{{item.media_id}}">
+						<td class="hidden-xs">{{item.media_id}}</td>
+						<td onclick="showMedia('{{item.url}}')" style="cursor: pointer;"><img src="{{item.url}}?vframe/jpg/offset/0.01/w/720/h/480" height="120px" width="140px" /></td>
+						<td class="hidden-xs">{{item.media_desc}}</td>
+						<td class="hidden-xs"><a href="{{item.url}}" target="_blank">{{item.url}}</a></td> 
+						<td>
+							<div class="layui-inline">
+								<button class="layui-btn layui-btn-small layui-btn-normal addBtn" data-id="{{item.media_id}}" data-url="/video-edit?media_id={{item.media_id}}"><i class="layui-icon">&#xe642;</i></button>
+								<button class="layui-btn layui-btn-small layui-btn-danger deleMedia" media_id='{{item.media_id}}'><i class="layui-icon">&#xe640;</i></button>
+							</div>
+						</td>
+					</tr> 
+
+	     {% endfor %} 
+  {% endif %}
+
+					 	
+				</tbody>
+			</table>
+
+			<div class="page-wrap"> </div>
+		</div>
+	</div>
+</div>
+{% endblock %}
+
+{% block footer %}
+ <script type="text/javascript">
+if(!window.showMedia){
+	window.showMedia = function(url){
+		layer.open({
+		  type: 2,
+		  title: false,
+		  area: ['630px', '360px'],
+		  shade: 0.8,
+		  closeBtn: 0,
+		  shadeClose: true,
+		  content: url
+		});
+	 }
+} 
+
+// 删除媒体
+$('body').on('click','.deleMedia',function(){
+	var params = {};
+	params.media_id = $(this).attr('media_id');
+		Http({url:'/deleteVideo',method:'DELETE'},params, function(rsp){
+		if(rsp.code == 2000){ 
+			layer.msg(rsp.msg,{icon:1},function(){
+				location.reload();
+			});
+		} else {
+			layer.msg(rsp.msg,{icon:2});
+		}
+	});	
+ 	return false;
+});
+
+
+// 分页
+window.call = function(current_page,page_size){
+  location.href="/video-list?current_page="+current_page+'&page_size='+page_size+'&q={{q}}&qn={{qn}}';
+} 
+var html = multi(parseInt('{{total_num}}'), parseInt('{{current_page}}'), parseInt('{{page_size}}'),'call');
+$('.page-wrap').html(html);
+</script>
+
+{% endblock %}

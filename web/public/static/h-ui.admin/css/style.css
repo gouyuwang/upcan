@@ -1,0 +1,14 @@
+@charset "utf-8";
+/* 你自己的样式 */
+/*//隐藏当前数据中搜索*/
+#DataTables_Table_0_filter{display: none;}
+#DataTables_Table_0_length{display: none;}
+#tagList{margin-left: 20px;}
+#tagList a{margin-left: 150px;}
+
+/*新增学习选项*/
+.select_option{width: 100%;}
+.select_option textarea{width: 1240px;resize: none;font-size: 14px;}
+.select_option span{width: 100%;}
+.select_option input{margin-left: 20px;}
+.select_option .xuanxiang{width: 400px;}

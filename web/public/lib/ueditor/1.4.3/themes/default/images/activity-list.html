@@ -1,0 +1,455 @@
+﻿<!DOCTYPE HTML>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="renderer" content="webkit|ie-comp|ie-stand">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<link rel="stylesheet" type="text/css" href="static/h-ui/css/H-ui.min.css" />
+<link rel="stylesheet" type="text/css" href="static/h-ui.admin/css/H-ui.admin.css" />
+<link rel="stylesheet" type="text/css" href="lib/Hui-iconfont/1.0.7/iconfont.css" />
+<link rel="stylesheet" type="text/css" href="lib/icheck/icheck.css" />
+<link rel="stylesheet" type="text/css" href="static/h-ui.admin/skin/default/skin.css" id="skin" />
+<link rel="stylesheet" type="text/css" href="static/h-ui.admin/css/style.css" />
+<link rel="stylesheet" href="user/js/paging.css" media="screen" title="no title">
+<title>活动列表</title>
+</head>
+<style>
+	.tableBox{
+		border-bottom: 2px solid #fb4748;
+		width: 100%;
+	}
+	.tableBox span{
+		background-color: #e8e8e8;
+		cursor: pointer;
+		display: inline-block;
+		float: left;
+		font-weight: bold;
+		height:30px;
+		line-height: 30px;
+		padding: 0 15px;
+	}
+
+	.tableBox span.current{
+		background-color: #fb4748;
+		color: #fff;
+	}
+</style>
+<body>
+<nav class="breadcrumb"><i class="Hui-iconfont">&#xe67f;</i> 首页 <span class="c-gray en">&gt;</span> 活动管理 <span class="c-gray en">&gt;</span> <span style="color:#fb4748;">活动列表</span> <a class="btn btn-success radius r" style="line-height:1.6em;margin-top:3px;background-color: #fb4748;border: none" href="javascript:location.replace(location.href);" title="刷新" ><i class="Hui-iconfont">&#xe68f;</i></a></nav>
+<div class="page-container">
+	<input type="text" id="newsState" value="1" style="display:none;">
+	<div class="cl" style="position: relative;margin-top: 20px">
+		<div class="tableBox cl" style="float:left!important">
+			<span class="tabSelect current" onclick="onLinehandleChange(1)" href="javascript:;">
+				 已上线
+			</span>
+			<span class="tabSelect" onclick="onLinehandleChange(2)" href="javascript:;">
+				 已下线
+			</span>
+		</div>
+		<span class="l" style="position: absolute;right: 0;bottom:7px">
+			<a class="btn" style="border: none;background-color: #fb4748;color: #fff" data-title="添加活动" onclick="article_add('添加活动','rmrb_news_add.html','10001')" href="javascript:;">
+				<i class="Hui-iconfont">&#xe600;</i> 添加活动
+			</a>
+		</span>
+	</div>
+	<div class="mt-20">
+		<table class="table table-border table-bordered table-bg table-hover table-sort" style="width:77%;float:left">
+			<thead>
+				<tr class="text-c">
+					<th>标题</th>
+					<th width="80">标签</th>
+					<th width="120">更新时间</th>
+					<th width="80">活动状态</th>
+					<th width="75">报名人数</th>
+					<th id="lock">是否锁定</th>
+					<th id="recom">推荐值</th>
+					<th width="120">操作</th>
+				</tr>
+			</thead>
+			<tbody id="activityList">
+
+			</tbody>
+		</table>
+		<div class="c" style="width:20%;float:right;">
+			<p style="text-align: center;margin-bottom:0;padding: 7px 0;border: 1px solid #ddd;border-bottom: none">标签管理</p>
+			<ul class="select" style="display: block;overflow: auto;height: 300px;">
+				<li style="border-bottom:1px solid #ddd;padding:10px;padding-left:30px;padding-right:30px;height:15px;padding-bottom: 11px">
+					<p style="float:right;margin-bottom:0" id="addTag"  tagID="999"><i class="Hui-iconfont">&#xe600;</i>添加</p>
+				</li>
+				<li style="border-bottom:1px solid #ddd;padding:10px;padding-left:30px;padding-right:30px;height:15px;padding-bottom: 11px">
+					<p style="float:left;margin-bottom:0;" onclick="handleChange(999)" value="999">全部标签</p>
+				</li>
+			</ul>
+		</div>
+		<div class="clear" style="clear:both"></div>
+		<div id="pageDiv">
+			<div id="pageTool" style="margin-top:20px;float:right;margin-right:25%"></div>
+		</div>
+
+		<div id="data1" data-page="{{data.totalNum}}"></div>
+		<div id="data2" data-page="{{data.pageSize}}"></div>
+		<div id="data3" data-page="{{data.currentPage}}"></div>
+
+	</div>
+</div>
+
+<!-- 数据渲染模版 -->
+<script type="text/html" id="dataList">
+	<tr class="text-c" id="active-{&activityID&}">
+		<td class="text-l"><u style="cursor:pointer" class="text-primary" onClick="activityDetails('{&activityID&}')"title="查看">{&activityTitle&}</u></td>
+		<td>{&attrValue&}</td>
+		<td>{&lastTime&}</td>
+		{& if activityRun == '1' &}
+			<td>活动未开始</td>
+		{& /if &}
+		{& if activityRun == '2' &}
+			<td>活动进行中</td>
+		{& /if &}
+		{& if activityRun == '3' &}
+			<td>活动已结束</td>
+		{& /if &}
+		<td>{&enlistNum&}</td>
+		{& if communityActivityState == '1'&}
+			{& if isLock == '1' &}
+				<td>未锁定</td>
+				<td class="newsSort" newsID="{&activityID&}"><u><a>{&activitySort&}</a></u></td>
+				<td>
+					<!-- <a style="text-decoration:none" class="ml-5" onClick="article_edit('{&activityID&}')" href="javascript:;" title="编辑">编辑</a> -->
+					<a style="text-decoration:none" class="ml-5" onClick="offline('{&activityID&}')" href="javascript:;" title="下架">下线</a>
+				</td>
+			{& else &}
+				<td>已锁定</td>
+				<td>--</td>
+				<td>
+					<a style="text-decoration:none" class="ml-5" href="javascript:;" title="编辑">编辑</a>
+					<a style="text-decoration:none" class="ml-5" href="javascript:;" title="下架">下线</a>
+				</td>
+			{& /if &}
+		{& else &}
+			<td>
+				<a style="text-decoration:none" class="ml-5" onClick="offline('{&activityID&}')" href="javascript:;" title="上线">上线</a>
+				<a style="text-decoration:none" class="ml-5" onClick="article_edit({&activityID&})" href="javascript:;" title="编辑">编辑</a>
+				<a style="text-decoration:none" class="ml-5" onClick="activitydele('{&activityID&}')" href="javascript:;" title="删除">删除</a>
+			</td>
+		{& /if &}
+	</tr>
+</script>
+<script type="text/javascript" src="lib/jquery/1.9.1/jquery.min.js"></script>
+<script type="text/javascript" src="lib/layer/2.1/layer.js"></script>
+<script type="text/javascript" src="user/js/arttemlate.js"></script>
+<script type="text/javascript" src="static/h-ui/js/H-ui.js"></script>
+<script type="text/javascript" src="static/h-ui.admin/js/H-ui.admin.js"></script>
+<script src="user/js/query.js"></script>
+<script src="user/js/paging.js"></script>
+<script type="text/javascript">
+	$(document).ready(function(){
+
+		//arttemplate 配置定义
+		template.config('openTag','{&');
+		template.config('closeTag','&}');
+		//分页配置定义
+		var data1 = $('#data1').data(),
+				data2 = $('#data2').data(),
+				data3 = $('#data3').data();
+		var totalNum = data1.page;
+		var pageSize = data2.page;
+		var currentPage = data3.page;
+		//tab切换
+		$('.tabSelect').on('click',function () {
+			var tab = document.getElementsByClassName("tabSelect");
+			$.each(tab,function (k, v) {
+				v.className = "tabSelect";
+			});
+			this.className = "tabSelect current";
+		});
+		//推荐值编辑
+		var opens;
+		var news;
+		$('body').on('click','.newsSort',function(){
+			var newsID = $(this).attr('newsID');
+			news = $(this);
+			var _input = '<input type="number" id="newName" min="0" max="100" placeholder="请输入0-100的推荐值" style="padding-left:20px;height: 27px;width: 218px;font-size: 14px;border:1px solid #f5f5f5;"><button type="button" name="button" newsID="'+newsID+'" class="newsOk" style="width: 90px;margin-top: 30px;height: 35px;margin-left: 20px;border: 0;background: #5a98de;color: #fff;border-radius: 5%;">确认</button><button type="button" name="button" class="newsCancel" style="width: 90px;margin-top: 30px;height: 35px;margin-left: 20px;border: 0;background: #dd514c;color: #fff;border-radius: 5%;">取消</button>';
+			opens = layer.open({
+				type: 1,
+				title:'推荐值',
+				skin: 'layui-layer-rim', //加上边框
+				area: ['240px', '156px'], //宽高
+				content: _input
+			});
+		});
+		//取消
+		$('body').on('click','.newsCancel',function(){
+			layer.close(opens);
+		});
+		//确认
+		$('body').on('click','.newsOk',function(){
+			newName = $('#newName').val();
+			var newsID = $(this).attr('newsid');
+			if(newName == ''){
+				layer.msg('请输入推荐值');
+				return;
+			}
+			if(newName == 'undef'){
+				layer.msg('修改成功');
+				layer.close(opens);
+				return;
+			}
+
+			//编辑排序值
+			$.post('/editorSort',{'sortName':newName,'newsID':newsID,'type':2},function(data){
+				layer.msg(data.msg);
+				if(data.code == '2000'){
+					layer.close(opens);
+					news.html(newName);
+				}
+			},'json');
+		});
+
+		//标签添加
+		$('#addTag').on('click',function(){
+			var tagID = $(this).attr('tagid');
+			var _input = '<input type="text" id="newName" name="" placeholder="请输入标签名称" style="padding-left:20px;height: 27px;width: 218px;font-size: 14px;border:1px solid #f5f5f5;"><button type="button" name="button" tagID="'+tagID+'" class="ok" style="width: 90px;margin-top: 30px;height: 35px;margin-left: 20px;border: 0;background: #5a98de;color: #fff;border-radius: 5%;">确认</button><button type="button" name="button" class="cancel" style="width: 90px;margin-top: 30px;height: 35px;margin-left: 20px;border: 0;background: #dd514c;color: #fff;border-radius: 5%;">取消</button>';
+			open = layer.open({
+				type: 1,
+				tittle:'标签',
+				skin: 'layui-layer-rim', //加上边框
+				area: ['240px', '156px'], //宽高
+				content: _input
+			});
+		});
+		//标签-重命名
+		var open;
+		var newName = 'undef';
+		var borther;
+		$('body').on('click','.reName',function(){
+			var name = $(this).attr('title');
+			var tagID = $(this).attr('tagid');
+			borther = $(this);
+			var _input = '<input type="text" id="newName" name="" value="'+name+'" style="padding-left:20px;height: 27px;width: 218px;font-size: 14px;border:1px solid #f5f5f5;"><button type="button" name="button" tagID="'+tagID+'" class="ok" style="width: 90px;margin-top: 30px;height: 35px;margin-left: 20px;border: 0;background: #5a98de;color: #fff;border-radius: 5%;">确认</button><button type="button" name="button" class="cancel" style="width: 90px;margin-top: 30px;height: 35px;margin-left: 20px;border: 0;background: #dd514c;color: #fff;border-radius: 5%;">取消</button>';
+			open = layer.open({
+			  type: 1,
+				title:'标签',
+			  skin: 'layui-layer-rim', //加上边框
+			  area: ['240px', '156px'], //宽高
+			  content: _input
+			});
+		});
+
+		//取消
+		$('body').on('click','.cancel',function(){
+			layer.close(open);
+		});
+
+		//确认
+		$('body').on('click','.ok',function(){
+			newName = $('#newName').val();
+			var tagID = $(this).attr('tagid');
+			if(newName == ''){
+				layer.msg('请输入标签名');
+				return;
+			}
+			if(newName == 'undef'){
+				layer.msg('修改成功');
+				layer.close(open);
+				return;
+			}
+
+			if(tagID == '999'){//添加标签
+				$.post('/addTags',{'tagName':newName,'attrGroupID':2},function(data){
+					layer.msg(data.msg);
+					if(data.code == '2000'){
+						layer.close(open);
+						html = '<li style="border-bottom:1px solid #ddd;padding:10px;padding-left:30px;padding-right:30px;height:15px;padding-bottom: 11px;font-size: 12px"><p style="float:left;margin-bottom:0px;" onclick="handleChange('+data.data.attrID+')">'+data.data.attrValue+'</p><a style="text-decoration:none;float:right" class="ml-5 article_edit reName" href="javascript:;" title="'+data.data.attrValue+'" tagID="'+data.data.attrID+'" >重命名</a><a style="text-decoration:none;float:right" class="ml-5 article_edit delectTag" href="javascript:;" tagID="'+data.data.attrID+'">删除</a></li>';
+						$('.select').append(html);
+					}
+				},'json');
+			}else {//编辑便签
+				$.post('/editorTags',{'tagName':newName,'tagID':tagID},function(data){
+					layer.msg(data.msg);
+					if(data.code == '2000'){
+						layer.close(open);
+						borther.prev().html(newName);
+					}
+				},'json');
+			}
+		});
+
+		//标签删除
+		$('body').on('click','.delectTag',function(){
+				var tagID = $(this).attr('tagid');
+				var $this = $(this);
+				$.post('/delectTags',{'tagID':tagID},function(data){
+					layer.msg(data.msg);
+					if(data.code == '2000'){
+						// console.log($(this).parent().remove());
+						$this.parent().remove();
+					}
+				},'json');
+		});
+
+		//分类列表
+		$.ajax({
+		  type:'GET',
+		  url:'/getClassify',
+			data:{'type':2},
+		  success:function(data){
+		    if(data.code == '2000'){
+		      var html = '';
+		      $.each(data.data,function(k,v){
+		        html = '<li style="border-bottom:1px solid #ddd;padding:10px;padding-left:30px;padding-right:30px;height:15px;padding-bottom: 11px;font-size: 12px"><p style="float:left;margin-bottom:0px;" onclick="handleChange('+v.attrID+')">'+v.attrValue+'</p><a style="text-decoration:none;float:right" class="ml-5 article_edit reName" href="javascript:;" title="'+v.attrValue+'" tagID="'+v.attrID+'" >重命名</a><a style="text-decoration:none;float:right" class="ml-5 article_edit delectTag" href="javascript:;" tagID="'+v.attrID+'">删除</a></li>';
+		        $('.select').append(html);
+		      });
+		    }
+		  }
+		});
+
+		//数据渲染
+		window.dataLate = function(currentPage = null, attrID = null, offline = null){
+			var args = {};
+			var url = '/activityList';
+			var page;
+			args['state'] = 1;
+			if(currentPage){//页数
+				args['currentPage'] = currentPage;
+			}
+			if(attrID){//标签
+				args['attrID'] = attrID;
+			}
+			if(offline){//线上线下
+				args['offline'] = offline;
+			}
+			$('#activityList').empty();
+			//初始化加载
+			var index = layer.load(2, {shade: false});
+			//数据拉取
+			$.get(url,args,function(data){
+
+				if(data.code == '2000' && data.data.list.length != 0){//成功拉取数据并且数据不为空的时候渲染
+					var html = '';//数据容器初始化
+					$.each(data.data.list,function(k,v){
+						html += template('dataList',v);
+					});
+					if(offline == 1){//显示
+						$("#lock").show();
+						$("#recom").show();
+					}
+					if(offline == 2){//隐藏
+						$("#lock").hide();
+						$("#recom").hide();
+					}
+					//添加数据
+					$("#activityList").append(html);
+					//关闭提示层
+					layer.close(index);
+				}else {
+					layer.close(index);
+					layer.msg('暂无数据')
+				}
+				//分页
+				if(!currentPage){
+					pageing(data.data.pageSize,data.data.totalNum,data.data.currentPage);
+				}
+			},'json');
+		}
+
+		//初始化调用
+		dataLate();
+
+		/*分页*/
+		window.pageing = function(pageSize,totalNum,currentPage){
+			var newsState = document.getElementById('newsState').value;
+			var pageHtml = '<div id="pageTool" style="margin-top:20px;float:right;margin-right:25%"></div>';
+			$('#pageDiv').html(pageHtml);
+			//翻页拉取数据
+			$('#pageTool').Paging({pagesize:pageSize,count:totalNum,callback:function(page,size,count){
+				//获取数据
+				dataLate(page,null,newsState);
+			}});
+		};
+		/*资讯-删除*/
+		window.activitydele = function(id){
+			layer.confirm('确认要删除？',function(){
+				$.ajax({
+					url: '/activityDele',
+					type:'POST',
+					data:{"activityID":id},
+					success:function(data){
+						if(data.code == '2000'){
+							layer.msg('已删除!');
+							location.replace(location.href);
+						}else {
+							layer.msg(data.msg);
+						}
+					}
+				});
+			});
+		}
+	})
+</script>
+<script type="text/javascript">
+
+/*资讯-添加*/
+function article_add(title,url,w,h){
+	var index = layer.open({
+		type: 2,
+		title: title,
+		content: '/activityAdd'
+	});
+	layer.full(index);
+}
+/*资讯-编辑*/
+function article_edit(id){
+	var index = layer.open({
+		type: 2,
+		title: '活动编辑',
+		content: '/activityEditor?id='+id
+	});
+	layer.full(index);
+}
+
+function activityDetails(id){
+	var index = layer.open({
+		type: 2,
+		title: '活动详情',
+		content: '/activityDetails?id='+id
+	});
+	layer.full(index);
+}
+
+//标签筛选
+function handleChange(value) {
+	var newsState = document.getElementById('newsState').value;
+	if(value==999){
+		dataLate(null,null,newsState);
+	}
+	else{
+		dataLate(null,value,newsState);
+	}
+}
+
+//线上线下
+function onLinehandleChange(value){
+	document.getElementById('newsState').value = value;
+	dataLate(null,null,value);
+}
+
+//下线
+function offline(newsID){
+	layer.confirm('确认要进行操作么？', {
+	  btn: ['确认','取消'] //按钮
+	}, function(){
+		$.post('/offline',{'newsID':newsID,'type':2},function(data){
+			layer.msg(data.msg);
+			if(data.code == '2000'){
+				location.replace(location.href);
+			}
+		},'json');
+	});
+}
+</script>
+</body>
+</html>

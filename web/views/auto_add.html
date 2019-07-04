@@ -1,0 +1,80 @@
+{% extends './public/layout.html' %}
+
+{% block content %}
+<div class="page-content-wrap">
+	<form class="layui-form">
+
+		<div class="layui-form-item">
+			<label class="layui-form-label">关键词：</label>
+			<div class="layui-input-block">
+				<input type="text" name="auto_words" value="{{auto_words}}" required="" lay-verify="required" placeholder="请输入关键词" autocomplete="off" class="layui-input">
+			</div>			
+		</div>	
+
+		<div class="layui-form-item layui-form-text">
+			<label class="layui-form-label">回复：</label>
+			<div class="layui-input-block">
+				<textarea name="auto_replay" placeholder="请输入简要回复内容(不超过255个汉字)" maxlength="255" class="layui-textarea">{{auto_replay}}</textarea>
+			</div>
+		</div>
+
+		{% if auto_id %}
+			<input type="hidden" name="auto_id" value="{{auto_id}}">
+		{% endif %}
+
+		<div class="layui-form-item" style="padding-left: 10px;">
+			<div class="layui-input-block">
+				<button class="layui-btn layui-btn-normal" lay-submit lay-filter="submit">立即提交</button>
+				<button type="reset" class="layui-btn layui-btn-primary">重置</button>
+			</div>
+		</div>
+
+	</form>
+
+</div>
+{% endblock %}
+
+{% block footer %} 
+<script type="text/javascript">
+	layui.use(['form', 'jquery', 'laydate', 'layer', 'laypage', 'dialog',  'element', 'upload', 'layedit'], function() {
+				var form = layui.form(),
+					layer = layui.layer,
+					$ = layui.jquery,
+					laypage = layui.laypage,
+					laydate = layui.laydate,
+					layedit = layui.layedit,
+					element = layui.element(),
+					dialog = layui.dialog;
+
+				// 获取当前iframe的name值
+				var iframeObj = $(window.frameElement).attr('name');
+
+			 	form.render();
+ 
+ 			   // 监听提交
+   	  	 	   form.on('submit(submit)', function(data){
+			      var params = data.field;
+ 				  console.log(params);
+
+ 				  if ( params.auto_id ){ 
+ 				  	proc = {url:'/editAuto',method:'PUT'};
+ 				  }	 else {
+ 				  	proc = {url:'/addAuto',method:'POST'};
+ 				  }
+
+			      // 数据提交
+		          Http(proc,params,function(res){
+		            if (res.code == 2000){
+		                layer.msg(res.msg,{icon:1, time:2000},function(){ 
+		                   parent.layer.close(parent.layer.getFrameIndex(window.name)); 
+	                   });
+		            } else {
+		               layer.msg(res.msg,{icon:2, time:2000});
+		            }
+		         });
+			     return false;
+			  });
+ 
+			});
+</script>
+{% endblock %}

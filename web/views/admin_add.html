@@ -1,0 +1,95 @@
+{% extends './public/layout.html' %}
+
+{% block content %}
+<div class="page-content-wrap">
+	<form class="layui-form">
+
+		<div class="layui-form-item">
+			<label class="layui-form-label">账户：</label>
+			<div class="layui-input-block">
+				{% if admin_id %}
+
+				<input type="text" name="admin_account" value="{{admin_account}}" required="" disabled="disabled" lay-verify="required" placeholder="请输入账户" autocomplete="off" class="layui-input layui-input-disabled">
+				
+				{% else %}
+
+				<input type="text" name="admin_account" value="{{admin_account}}" required="" lay-verify="required" placeholder="请输入账户" autocomplete="off" class="layui-input">
+
+				{% endif %} 
+			</div>			
+		</div>	
+
+		<div class="layui-form-item layui-form-text">
+			<label class="layui-form-label">密码：</label>
+			<div class="layui-input-block">
+				<input type="password" name="admin_pwd" value="" required="" lay-verify="required" placeholder="请输入密码" autocomplete="off" class="layui-input">
+			</div>
+		</div>
+
+		<div class="layui-form-item layui-form-text">
+			<label class="layui-form-label">昵称：</label>
+			<div class="layui-input-block">
+				<input type="text" name="admin_nickname" value="{{admin_nickname}}" required="" lay-verify="required" placeholder="请输入昵称" autocomplete="off" class="layui-input">
+			</div>
+		</div>
+
+		{% if admin_id %}
+			<input type="hidden" name="admin_id" value="{{admin_id}}">
+		{% endif %}
+
+		<div class="layui-form-item" style="padding-left: 10px;">
+			<div class="layui-input-block">
+				<button class="layui-btn layui-btn-normal" lay-submit lay-filter="submit">立即提交</button>
+				<button type="reset" class="layui-btn layui-btn-primary">重置</button>
+			</div>
+		</div>
+
+	</form>
+
+</div>
+{% endblock %}
+
+{% block footer %} 
+<script type="text/javascript">
+	layui.use(['form', 'jquery', 'laydate', 'layer', 'laypage', 'dialog',  'element', 'upload', 'layedit'], function() {
+				var form = layui.form(),
+					layer = layui.layer,
+					$ = layui.jquery,
+					laypage = layui.laypage,
+					laydate = layui.laydate,
+					layedit = layui.layedit,
+					element = layui.element(),
+					dialog = layui.dialog;
+
+				// 获取当前iframe的name值
+				var iframeObj = $(window.frameElement).attr('name');
+
+			 	form.render();
+ 
+ 			   // 监听提交
+   	  	 	   form.on('submit(submit)', function(data){
+			      var params = data.field;
+ 				  console.log(params);
+
+ 				  if ( params.admin_id ){ 
+ 				  	proc = {url:'/editAdmin',method:'PUT'};
+ 				  }	 else {
+ 				  	proc = {url:'/addAdmin',method:'POST'};
+ 				  }
+
+			      // 数据提交
+		          Http(proc,params,function(res){
+		            if (res.code == 2000){
+		                layer.msg(res.msg,{icon:1, time:2000},function(){ 
+		                   parent.layer.close(parent.layer.getFrameIndex(window.name)); 
+	                   });
+		            } else {
+		               layer.msg(res.msg,{icon:2, time:2000});
+		            }
+		         });
+			     return false;
+			  });
+ 
+			});
+</script>
+{% endblock %}

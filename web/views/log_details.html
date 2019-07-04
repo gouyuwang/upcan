@@ -1,0 +1,151 @@
+{% extends './public/layout.html' %}
+{% block header %}
+
+<div class="wrap-container clearfix">
+	<div class="column-content-detail">
+		<form class="layui-form" action="">
+			<div class="layui-form-item"> 
+				<div class="layui-inline">
+					<input type="text" name="q" value="{{q}}"   placeholder="请输入关键词" autocomplete="off" class="layui-input">
+				</div> 
+				
+				<div class="layui-inline">
+					<input type="text" class="layui-input"  name="d" placeholder="按日期查询"  onclick="layui.laydate({elem: this, istime: true, format: 'YYYY-MM-DD'})">
+				</div>
+				<input type="hidden" name="openid" value="{{openid}}"/> 
+				<button class="layui-btn layui-btn-normal" lay-submit="search">搜索</button> 
+				<button class="layui-btn layui-btn-primary" onclick="refresh();">刷新</button>
+			</div>
+		</form>
+		<div class="layui-form" id="table-list">
+			<table class="layui-table" lay-even lay-skin="nob">
+				<colgroup>
+					<col class="hidden-xs" width="50">
+					<col width="250">
+					<col>
+					<col class="hidden-xs" width="150"> 
+					<col class="hidden-xs" width="100">
+					<col class="hidden-xs" width="200">
+					<col width="200">
+				</colgroup>
+				<thead>
+					<tr>
+						<th class="hidden-xs">客户</th>
+						<th>昵称</th>
+						<th>问题描述</th> 
+						<th class="hidden-xs">状态</th>
+						<th class="hidden-xs">分类</th> 
+						<th class="hidden-xs">咨询时间</th> 
+						<th>操作</th>
+					</tr>
+				</thead>
+				<tbody>
+
+
+  {% if total_num > 0 %}
+        {% for item in list %}
+					<tr id="row_{{item.log_id}}">
+						<td class="hidden-xs" style="text-align: center;"><img src="{{item.headimgurl}}" height="48px" width="48px" /></td>
+						<td>{{item.nickname}}</td>
+						<td>{{item.log_content}}</td>
+						<td class="hidden-xs">
+							{% if item.opercode == 2003 && !item.worker %}
+							<span class="layui-badge layui-bg-red" style="color: #fff;">未接待</span>
+							{% elseif item.opercode == 2003 %}
+							<span class="layui-badge layui-bg-orange" style="color: #fff;">咨询</span>
+							{% elseif item.opercode == 2002 %}
+							<span class="layui-badge layui-bg-green" style="color: #fff;">答复</span>
+							{% else %}
+							<span class="layui-badge layui-bg-blue" style="color: #fff;">自动回复</span>
+							{% endif %}
+						</td> 
+						<td class="hidden-xs">{{item.attr_value}}</td> 
+						<td class="hidden-xs">{{item.log_time}}</td> 
+						<td>
+							<div class="layui-inline">
+								<button class="layui-btn layui-btn-small layui-btn-normal editLogAttr" log_id={{item.log_id}} title="设置分类"><i class="layui-icon">&#xe642;</i></button>
+								<button class="layui-btn layui-btn-small layui-btn-danger deleLog" log_id={{item.log_id}} title="删除记录"><i class="layui-icon">&#xe640;</i></button>
+							</div>
+						</td>
+					</tr> 
+ 	   {% endfor %}
+  {% endif %}
+
+			
+				</tbody>
+			</table> 
+
+			<div class="page-wrap"> </div>
+
+		</div>
+	</div>
+</div>
+
+{% endblock %}
+
+
+
+{% block footer %}
+<script type="text/javascript">
+	var open; 
+	var list;
+
+	// 设置分类
+	$.get('/logAttr',{},function(rsp){
+		$.each(rsp.list, function(k,v){
+	 		list += '<option value='+v.attr_id+'>'+v.attr_value+'</option>';
+	 	})
+	}) 
+
+	// 分类编辑
+	$('body').on('click','.editLogAttr',function(){
+		var params = {};
+		params.log_id = $(this).attr('log_id');
+ 	 	open = layer.open({
+            type: 1,
+            btn:['确定'],
+            title:'选择分类',
+            skin: 'layui-layer-rim', //加上边框
+            area: ['200px', '156px'], //宽高
+            content: '<select id="log_attr" style="height: 27px; width:80%; border:1px solid #f5f5f5;margin-left:10px;margin-top:10px;">' + list + '</select>'
+        	,yes:function(layeto){
+  				params.attr_id = $('#log_attr').val();
+  				Http({url:'/editLogAttr',method:'PUT'},params, function(rsp){
+					if(rsp.code == 2000 ){
+						layer.msg(rsp.msg,{icon:1},function(){
+							location.reload();
+						});					
+					}  else {
+						layer.msg(rsp.msg,{icon:2});
+					}
+				});	 
+        	}
+        });
+ 	 	return false;
+	});
+
+	// 日志删除
+	$('body').on('click','.deleLog',function(){
+		var params = {};
+		params.log_id = $(this).attr('log_id');
+ 		Http({url:'/deleLog',method:'DELETE'},params, function(rsp){
+			if(rsp.code == 2000){ 
+				layer.msg(rsp.msg,{icon:1},function(){
+					location.reload();
+				});
+			} else {
+				layer.msg(rsp.msg,{icon:2});
+			}
+		});	
+	 	return false;
+	});
+
+
+	// 分页
+	window.call = function(current_page,page_size){
+	  location.href="/log-details?openid={{openid}}&current_page="+current_page+'&page_size='+page_size+'&q={{q}}&qn={{qn}}';
+	} 
+	var html = multi(parseInt('{{total_num}}'), parseInt('{{current_page}}'), parseInt('{{page_size}}'),'call');
+	$('.page-wrap').html(html);
+</script> 
+{% endblock %}
